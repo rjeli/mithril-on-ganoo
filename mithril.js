@@ -346,7 +346,6 @@ var _12 = function($window) {
 	}
 	function createText(parent, vnode3, nextSibling) {
 		var ch = vnode3.children;
-		console.log('doc:', $doc);
 		vnode3.dom = $doc.createTextNode(ch);
 		insertNode(parent, vnode3.dom, nextSibling)
 	}
@@ -881,7 +880,7 @@ var _12 = function($window) {
 		try {
 		if (nextSibling != null) parent.insertBefore(dom, nextSibling)
 		else parent.appendChild(dom)
-	} catch (e) { console.log('INSERT ERRR!!!', e); }
+	} catch (e) { console.log('INSERT ERRR!!!', e, e.stack); }
 	}
 	function maybeSetContentEditable(vnode3) {
 		if (vnode3.attrs == null || (
@@ -906,6 +905,7 @@ var _12 = function($window) {
 } catch (e) { console.log('REMOVENODES ERR!!', e); }
 	}
 	function removeNode(parent, vnode3) {
+		try{
 		var mask = 0
 		var original = vnode3.state
 		var stateResult, attrsResult
@@ -950,6 +950,7 @@ var _12 = function($window) {
 			onremove(vnode3)
 			removeChild(parent, vnode3)
 		}
+	} catch (e) { print('REMOVENODE ERR!!', e, e.stack); }
 	}
 	function removeHTML(parent, vnode3) {
 		for (var i = 0; i < vnode3.instance.length; i++) {
@@ -957,6 +958,8 @@ var _12 = function($window) {
 		}
 	}
 	function removeChild(parent, vnode3) {
+		print("trying to remove child?");
+		try{
 		// Dodge the recursion overhead in a few of the most common cases.
 		while (vnode3.dom != null && vnode3.dom.parentNode === parent) {
 			if (typeof vnode3.tag !== "string") {
@@ -981,6 +984,7 @@ var _12 = function($window) {
 			}
 			break
 		}
+	} catch (e) { console.log('REMOVECHILD ERR!!!', e, e.stack); }
 	}
 	function onremove(vnode3) {
 		if (typeof vnode3.tag !== "string" && typeof vnode3.state.onremove === "function") callHook.call(vnode3.state.onremove, vnode3)

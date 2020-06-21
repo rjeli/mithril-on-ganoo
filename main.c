@@ -87,6 +87,44 @@ js_dom_appendChild(JSContext *ctx, JSValueConst this, int argc, JSValueConst *ar
     return JS_UNDEFINED;
 }
 
+static JSValue
+js_dom_insertBefore(JSContext *ctx, JSValueConst this, int argc, JSValueConst *argv)
+{
+    printf("DomNode.insertBefore called with %d args: ", argc);
+    js_print(ctx, argc, argv);
+    printf("\n");
+
+    DOMNode *parent = JS_GetOpaque(this, js_dom_class_id);
+    DOMNode *child = JS_GetOpaque(argv[0], js_dom_class_id);
+    DOMNode *next_sib = JS_GetOpaque(argv[1], js_dom_class_id);
+
+    GValue sib_pos = G_VALUE_INIT;
+    g_value_init(&sib_pos, G_TYPE_INT);
+    gtk_container_child_get_property(GTK_CONTAINER(parent->widget), next_sib->widget, "position", &sib_pos);
+
+    printf("sib_pos: %d\n", g_value_get_int(&sib_pos));
+
+    gtk_container_add(GTK_CONTAINER(parent->widget), child->widget);
+    gtk_container_child_set_property(GTK_CONTAINER(parent->widget), child->widget, "position", &sib_pos);
+
+    gtk_widget_show_all(child->widget);
+    return JS_UNDEFINED;
+}
+
+static JSValue
+js_dom_removeChild(JSContext *ctx, JSValueConst this, int argc, JSValueConst *argv)
+{
+    printf("DomNode.removeChild called with %d args: ", argc);
+    js_print(ctx, argc, argv);
+    printf("\n");
+
+    DOMNode *parent = JS_GetOpaque(this, js_dom_class_id);
+    DOMNode *child = JS_GetOpaque(argv[0], js_dom_class_id);
+    gtk_container_remove(GTK_CONTAINER(parent->widget), child->widget);
+
+    return JS_UNDEFINED;
+}
+
 typedef struct {
     JSContext *ctx;
     JSValue func;
@@ -192,12 +230,36 @@ js_dom_firstChild_set(JSContext *ctx, JSValueConst this, JSValue val)
     return JS_UNDEFINED;
 }
 
+static JSValue 
+js_dom_parentNode_get(JSContext *ctx, JSValueConst this)
+{
+    DOMNode *node = JS_GetOpaque(this, js_dom_class_id);
+    printf("getting parent of %s\n", node->tag);
+    GtkWidget *parent = gtk_widget_get_parent(node->widget);
+    JSObject *elobj = g_object_get_data(G_OBJECT(parent), "jsval");
+    if (elobj) {
+        return JS_DupValue(ctx, JS_MKPTR(JS_TAG_OBJECT, elobj));
+    } else {
+        printf("PARENT!! no associated jsval!\n");
+        return JS_UNDEFINED;
+    }
+}
+
+static JSValue 
+js_dom_parentNode_set(JSContext *ctx, JSValueConst this, JSValue val)
+{
+    return JS_UNDEFINED;
+}
+
 static const JSCFunctionListEntry js_dom_proto_funcs[] = {
     JS_CFUNC_DEF("appendChild", 1, js_dom_appendChild),
+    JS_CFUNC_DEF("insertBefore", 1, js_dom_insertBefore),
+    JS_CFUNC_DEF("removeChild", 1, js_dom_removeChild),
     JS_CFUNC_DEF("addEventListener", 2, js_dom_addEventListener),
     JS_CGETSET_DEF("textContent", js_dom_textContent_get, js_dom_textContent_set),
     JS_CGETSET_DEF("nodeValue", js_dom_textContent_get, js_dom_textContent_set),
     JS_CGETSET_DEF("firstChild", js_dom_firstChild_get, js_dom_firstChild_set),
+    JS_CGETSET_DEF("parentNode", js_dom_parentNode_get, js_dom_parentNode_set),
 };
 
 static JSValue
