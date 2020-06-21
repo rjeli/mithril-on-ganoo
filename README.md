@@ -42,3 +42,7 @@ $ strip main
 $ du -h main
 812K    main
 ```
+
+p.s. it doesn't work at all
+
+LICENSE: GPL, of course
